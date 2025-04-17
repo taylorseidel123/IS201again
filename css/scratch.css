@@ -1,0 +1,177 @@
+.common{
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif,
+    
+}
+.pinkblend {
+    background-color: rgba(255, 228, 225, 0.6); /* MistyRose with transparency */
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 12px;
+    min-width: 160px;
+    list-style-position: inside;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  
+  .pinkblend:hover {
+    box-shadow: 0 4px 15px rgba(188, 143, 143, 0.4); /* soft rosybrown glow */
+    transform: translateY(-4px); /* lift effect */
+    box-shadow: 0 6px 20px rgba(188, 143, 143, 0.5),
+              0 0 10px rgba(255, 182, 193, 0.3);
+  }
+.common ol {
+    display: inline-block; /* keeps the list centered overall */
+    text-align: left;      /* aligns text within the list correctly */
+    list-style-position: inside;
+    padding-left: 0;
+  }
+  .common ol {
+    display: flex;
+    flex-wrap: wrap;        /* So items move to the next line if needed */
+    justify-content: center;
+    gap: 2rem;              /* Adds spacing between each list item */
+    padding-left: 0;
+    list-style-position: inside;
+  }
+  .common ol > li {
+    text-align: left;
+    background-color: rgba(188, 143, 143, 0.3);
+    padding: 1rem;
+    border-radius: 10px;
+    min-width: 150px;
+  }
+  .common ol > li > ul {
+    margin-top: 0.5rem;
+    padding-left: 1rem;
+  }
+.header{
+    background-color:rosybrown;
+    color:white;
+    height: 100px;
+    line-height: 100px;
+}
+.mainbody{
+    background: linear-gradient(to bottom,#ffffff 0%,#fff9ef 40%,#f9e7a8 100%);
+}
+.footer{
+    position:fixed;
+    background-color: rosybrown;
+    color:white;
+    bottom:0px;
+    left:5px;
+    right:5px;
+    height: 25px;
+    line-height: 25px;
+
+}
+
+img{
+    display: block;
+    width:25%;
+    margin-left: auto;
+    margin-right: auto;
+}
+nav{
+    background-color: lightgray;
+    padding:10px;
+    overflow:hidden;
+}
+nav a{
+    color:#333;
+    text-decoration: none;
+    padding: 20px;
+    font-weight:bold;
+}
+nav a:hover{
+    background-color: #ccc;
+
+}
+.custom-wrapper {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .image-container {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 1000px;
+    margin: 40px auto;
+  }
+  
+  .image-container img {
+    width: 30%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 10px; /* optional for nice rounded corners */
+  }
+  #backToTopBtn {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    z-index: 100;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease;
+  }
+  
+  #backToTopBtn:hover {
+    background-color: #555;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  .pinkblend a {
+    color: #d28ea6;           /* soft pink—pick any shade you like */
+    text-decoration: none;    /* removes the underline */
+    font-weight: 600;         /* a little bolder than normal */
+    transition: color 0.2s;
+  }
+  .pinkblend a:hover,
+.pinkblend a:focus {
+  color: #b56d88;           /* slightly deeper pink on hover */
+  text-decoration: underline; /* or keep `none` if you prefer */
+}
+.video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%;   /* 16:9 ratio */
+    height: 0;
+    overflow: hidden;
+    max-width: 100%;
+    margin: 2rem auto;        /* centers & gives breathing room */
+  }
+  
+  .video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .tableau-wrapper {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .my-class {
+    background: linear-gradient(
+      to bottom,               /* top → bottom flow */
+      #ffffff 0%,              /* pure white highlight */
+      #fff9ef 40%,             /* whisper‑cream transition */
+      #f9e7a8 100%             /* soft champagne‑gold */
+    );
+  }
+  
