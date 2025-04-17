@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Match Memory</title>
+  <!-- Google Fonts for a friendlier vibe -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cols: 4; /* default grid columns (easy) */
+      --card-size: 90px;
+      --primary: #ff89bb;
+      --bg: #faf8ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 2rem 1rem 4rem;
+    }
+    h1 {
+      margin: 0 0 0.25rem;
+      font-weight: 600;
+      color: #333;
+    }
+    #controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    select, button {
+      font-family: inherit;
+      padding: 0.5rem 0.9rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 2px solid var(--primary);
+      background: #fff;
+      cursor: pointer;
+    }
+    button#reset { background: var(--primary); color: #fff; border-color: var(--primary); }
+    button#reset:hover { background: #ff6da9; }
+
+    #stats { margin-bottom: 1rem; font-size: 1.1rem; }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), var(--card-size));
+      gap: 12px;
+      perspective: 800px;
+    }
+    .card {
+      position: relative;
+      width: var(--card-size);
+      height: var(--card-size);
+      transform-style: preserve-3d;
+      transition: transform 0.5s;
+      cursor: pointer;
+    }
+    .card.flip { transform: rotateY(180deg); cursor: default; }
+
+    .face {
+      position: absolute;
+      width: 100%; height: 100%;
+      backface-visibility: hidden;
+      border-radius: 10px;
+    }
+    .front { background: #4b4b4b linear-gradient(145deg,#5c5c5c,#3b3b3b); }
+    .back  { transform: rotateY(180deg); border: 3px solid #333; }
+
+    /* Confetti bits */
+    .confetti {
+      position: fixed;
+      width: 10px; height: 14px;
+      background: red;
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: 999;
+      transform: rotate(0deg);
+      will-change: transform, opacity;
+    }
+
+    /* Scoreboard */
+    #board {
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 320px;
+      background: #fff;
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    #board h3 { margin: 0 0 0.5rem; font-size: 1.1rem; text-align: center; }
+    #board ul { list-style: none; margin: 0; padding: 0; font-size: 0.95rem; }
+    #board li { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; }
+    #board li:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <h1>Color Match Memory</h1>
+  <div id="controls">
+    <label>Difficulty:
+      <select id="difficulty">
+        <option value="easy" selected>Easy (4×4)</option>
+        <option value="medium">Medium (5×4)</option>
+        <option value="hard">Hard (6×5)</option>
+      </select>
+    </label>
+    <button id="reset">New Game</button>
+    <a href="scratch.html" class="btn primary" id="homeBtn">Back to Site</a>
+  </div>
+  <div id="stats">Time: <span id="time">0.0</span> s &bullet; Matches: <span id="matches">0</span>/<span id="total">0</span></div>
+  <div id="grid"></div>
+
+  <!-- Score board -->
+  <div id="board" hidden>
+    <h3>🏆 Best Times</h3>
+    <ul id="bestTimes"></ul>
+  </div>
+
+<script>
+// ============= CONFIG & UTIL =============
+const PALETTES = [
+  ["#ffadad","#ffd6a5","#fdffb6","#caffbf","#9bf6ff","#a0c4ff","#bdb2ff","#ffc6ff"], // 8 colors
+  ["#ff9e9e","#ffbc97","#ffd495","#c8f3c1","#8bd6ff","#9ab8ff","#cab8ff","#f5b7ff","#a9e4d7","#ffc4c4"], // 10 colors
+  ["#e57373","#f06292","#ba68c8","#7986cb","#4db6ac","#81c784","#ffd54f","#ffb74d","#a1887f","#90a4ae","#f48fb1","#ce93d8","#b39ddb","#80deea","#bcaaa4"] // 15 colors
+];
+
+function shuffle(arr){return arr.sort(()=>Math.random()-0.5);} // simple shuffle
+function rand(max){return Math.floor(Math.random()*max);}      // tiny helper
+
+// ============= STATE =============
+let COLORS = [];
+let firstCard=null, lockGrid=false, matchCount=0;
+let startTime=null, timerId=null;
+let difficulty="easy";
+
+// Elements
+const grid=document.getElementById("grid");
+const timeEl=document.getElementById("time");
+const matchEl=document.getElementById("matches");
+const totalEl=document.getElementById("total");
+const resetBtn=document.getElementById("reset");
+const diffSel=document.getElementById("difficulty");
+const board=document.getElementById("board");
+const bestUl=document.getElementById("bestTimes");
+
+// ============= INIT GAME =============
+function initGame(){
+  // choose palette based on difficulty
+  difficulty=diffSel.value;
+  let pairs;
+  switch(difficulty){
+    case "easy":  pairs=8;  document.documentElement.style.setProperty("--cols","4"); break;
+    case "medium":pairs=10; document.documentElement.style.setProperty("--cols","5"); break;
+    case "hard":  pairs=15; document.documentElement.style.setProperty("--cols","6"); break;
+  }
+
+  COLORS=shuffle(PALETTES[Math.min(pairs-8,PALETTES.length-1)]).slice(0,pairs);
+  buildGrid();
+  resetStats();
+}
+
+function buildGrid(){
+  grid.innerHTML="";
+  const deck=shuffle([...COLORS,...COLORS]);
+  deck.forEach(color=>{
+    const card=document.createElement("div");
+    card.className="card";
+    card.dataset.color=color;
+    card.innerHTML=`<div class="face front"></div><div class="face back" style="background:${color}"></div>`;
+    card.addEventListener("click",onCardClick);
+    grid.appendChild(card);
+  });
+}
+
+function resetStats(){
+  firstCard=null; lockGrid=false; matchCount=0;
+  matchEl.textContent=0; totalEl.textContent=COLORS.length;
+  timeEl.textContent="0.0";
+  clearInterval(timerId);
+  grid.addEventListener("click",startTimer,{once:true});
+}
+
+// ============= TIMER =============
+function startTimer(){
+  startTime=Date.now();
+  timerId=setInterval(()=>{
+    timeEl.textContent=((Date.now()-startTime)/1000).toFixed(1);
+  },100);
+}
+
+// ============= CARD CLICK =============
+function onCardClick(e){
+  const card=e.currentTarget;
+  if(lockGrid||card.classList.contains("flip"))return;
+  card.classList.add("flip");
+  if(!firstCard){firstCard=card;return;}
+  // second card
+  const isMatch=card.dataset.color===firstCard.dataset.color;
+  if(isMatch){
+    matchCount++; matchEl.textContent=matchCount;
+    confettiBurst();
+    firstCard=null;
+    if(matchCount===COLORS.length) endGame();
+  }else{
+    lockGrid=true;
+    setTimeout(()=>{
+      card.classList.remove("flip");
+      firstCard.classList.remove("flip");
+      firstCard=null; lockGrid=false;
+    },700);
+  }
+}
+
+// ============= CONFETTI =============
+function confettiBurst(){
+  for(let i=0;i<25;i++){
+    const c=document.createElement("div");
+    c.className="confetti";
+    c.style.background=COLORS[rand(COLORS.length)];
+    c.style.left=rand(window.innerWidth)+"px";
+    c.style.top=rand(window.innerHeight/2)+"px";
+    c.style.transform=`rotate(${rand(360)}deg)`;
+    document.body.appendChild(c);
+    const fall=rand(1000)+1200;
+    c.animate([
+      {transform:c.style.transform,opacity:1,offset:0},
+      {transform:`translateY(${window.innerHeight}px) rotate(${rand(360)}deg)`,opacity:0.2,offset:1}
+    ],{duration:fall,easing:"ease-out"});
+    setTimeout(()=>c.remove(),fall);
+  }
+}
+
+// ============= END GAME & SCOREBOARD =============
+function endGame(){
+  clearInterval(timerId);
+  confettiBurst(); confettiBurst();
+  const finalTime=parseFloat(timeEl.textContent);
+  saveScore(finalTime);
+  setTimeout(()=>{
+    alert(`👏 You cleared ${difficulty} mode in ${finalTime.toFixed(1)} seconds!`);
+  },200);
+}
+
+function saveScore(t){
+  const key=`best-${difficulty}`;
+  const best=parseFloat(localStorage.getItem(key)||"0");
+  if(!best||t<best){localStorage.setItem(key,t);}
+  renderBoard();
+}
+
+function renderBoard(){
+  const levels=["easy","medium","hard"];
+  bestUl.innerHTML="";
+  levels.forEach(l=>{
+    const li=document.createElement("li");
+    const best=localStorage.getItem(`best-${l}`);
+    li.innerHTML=`<span>${l.charAt(0).toUpperCase()+l.slice(1)}</span><span>${best?best+" s":"—"}</span>`;
+    bestUl.appendChild(li);
+  });
+  board.hidden=false;
+}
+
+// ============= EVENTS =============
+resetBtn.addEventListener("click",initGame);
+diffSel.addEventListener("change",initGame);
+
+// ============= LAUNCH =============
+renderBoard();
+initGame();
+</script>
+</body>
+</html>
